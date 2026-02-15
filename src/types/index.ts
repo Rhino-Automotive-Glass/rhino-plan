@@ -6,7 +6,24 @@ export interface Task {
   description: string | null;
   column: ColumnId;
   position: number;
+  origin_sheet_id: string | null;
+  origin_sheet_code: string | null;
   created_at: string;
+}
+
+export interface OriginSheet {
+  id: string;
+  rhino_code: string | null;
+  descripcion: string | null;
+  clave_externa: string | null;
+  data: {
+    metadata?: {
+      fechaFormateada?: string;
+      creadoPor?: string;
+      verificadoPor?: string;
+    };
+    [key: string]: unknown;
+  };
 }
 
 export const COLUMNS: { id: ColumnId; label: string; color: string }[] = [

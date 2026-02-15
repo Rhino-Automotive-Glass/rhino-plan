@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useId } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -15,7 +15,7 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import type { Task, ColumnId } from "@/types";
 import { COLUMNS } from "@/types";
-import { moveTask } from "@/app/actions";
+import { moveTask, deleteTask } from "@/app/actions";
 import Column from "./Column";
 import TaskCard from "./TaskCard";
 import NewTaskForm from "./NewTaskForm";
@@ -48,6 +48,7 @@ function calcPosition(above: Task | undefined, below: Task | undefined): number 
 }
 
 export default function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
+  const dndId = useId();
   const [columns, setColumns] = useState(() => groupByColumn(initialTasks));
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
@@ -147,6 +148,22 @@ export default function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) 
     }
   }
 
+  async function handleDeleteTask(taskId: string) {
+    // Optimistically remove from UI
+    setColumns((prev) => {
+      const updated = { ...prev };
+      for (const col of Object.keys(updated) as ColumnId[]) {
+        updated[col] = updated[col].filter((t) => t.id !== taskId);
+      }
+      return updated;
+    });
+
+    const result = await deleteTask(taskId);
+    if (result.error) {
+      console.error("Failed to delete task:", result.error);
+    }
+  }
+
   function handleTaskCreated(task: Task) {
     setColumns((prev) => ({
       ...prev,
@@ -157,12 +174,13 @@ export default function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) 
   return (
     <div className="flex flex-col gap-6">
       {/* New task form */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="card p-6 md:p-8">
         <NewTaskForm onTaskCreated={handleTaskCreated} />
       </div>
 
       {/* Board */}
       <DndContext
+        id={dndId}
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
@@ -175,6 +193,7 @@ export default function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) 
               key={col.id}
               columnId={col.id}
               tasks={columns[col.id]}
+              onDeleteTask={handleDeleteTask}
             />
           ))}
         </div>

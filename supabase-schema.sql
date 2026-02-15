@@ -7,6 +7,8 @@ create table if not exists tasks (
   description text,
   "column"   text not null check ("column" in ('backlog', 'todo', 'doing', 'quality', 'done')),
   position   float8 not null default 0,
+  origin_sheet_id   text references public.origin_sheets(id),
+  origin_sheet_code text,
   created_at timestamptz not null default now()
 );
 
