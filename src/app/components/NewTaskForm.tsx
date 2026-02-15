@@ -89,6 +89,18 @@ export default function NewTaskForm({ onTaskCreated }: NewTaskFormProps) {
         </select>
       </div>
 
+      <div className="flex flex-col gap-1">
+        <label htmlFor="due_date" className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          Entrega
+        </label>
+        <input
+          id="due_date"
+          name="due_date"
+          type="date"
+          className="input-base"
+        />
+      </div>
+
       <button
         type="submit"
         disabled={isPending}

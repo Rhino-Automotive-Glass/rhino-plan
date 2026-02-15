@@ -8,6 +8,7 @@ export interface Task {
   position: number;
   origin_sheet_id: string | null;
   origin_sheet_code: string | null;
+  due_date: string | null;
   created_at: string;
 }
 

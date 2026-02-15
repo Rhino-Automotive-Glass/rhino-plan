@@ -3,3 +3,4 @@
 
 alter table tasks add column if not exists origin_sheet_id text references public.origin_sheets(id);
 alter table tasks add column if not exists origin_sheet_code text;
+alter table tasks add column if not exists due_date date;

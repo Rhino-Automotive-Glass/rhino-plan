@@ -9,6 +9,7 @@ export async function createTask(formData: FormData) {
   const column = (formData.get("column") as ColumnId) ?? "backlog";
   const originSheetId = (formData.get("origin_sheet_id") as string)?.trim() || null;
   const originSheetCode = (formData.get("origin_sheet_code") as string)?.trim() || null;
+  const dueDate = (formData.get("due_date") as string)?.trim() || null;
 
   if (!title) {
     return { error: "Title is required" };
@@ -34,6 +35,7 @@ export async function createTask(formData: FormData) {
       position,
       origin_sheet_id: originSheetId,
       origin_sheet_code: originSheetCode,
+      due_date: dueDate,
     })
     .select()
     .single();

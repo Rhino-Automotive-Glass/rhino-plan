@@ -9,6 +9,37 @@ interface TaskCardProps {
   onDelete?: (taskId: string) => void;
 }
 
+type Urgency = "overdue" | "soon" | "normal";
+
+function getUrgency(dueDate: string | null): Urgency {
+  if (!dueDate) return "normal";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate + "T00:00:00");
+  const diffMs = due.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) return "overdue";
+  if (diffDays <= 2) return "soon";
+  return "normal";
+}
+
+const urgencyStyles: Record<Urgency, string> = {
+  overdue:
+    "border-red-400 dark:border-red-500 bg-red-50 dark:bg-red-900/30",
+  soon:
+    "border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-900/30",
+  normal:
+    "border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800",
+};
+
+function formatDueDate(dueDate: string): string {
+  const date = new Date(dueDate + "T00:00:00");
+  return date.toLocaleDateString("es-MX", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
 export default function TaskCard({ task, onDelete }: TaskCardProps) {
   const {
     attributes,
@@ -25,13 +56,16 @@ export default function TaskCard({ task, onDelete }: TaskCardProps) {
     transition,
   };
 
+  const urgency = getUrgency(task.due_date);
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className={`group relative rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-3 shadow-sm
+      className={`group relative rounded-lg border p-3 shadow-sm
         hover:shadow-md transition-shadow
+        ${urgencyStyles[urgency]}
         ${isDragging ? "opacity-50 shadow-lg ring-2 ring-blue-400" : ""}`}
     >
       {/* Drag handle — entire card body */}
@@ -48,6 +82,26 @@ export default function TaskCard({ task, onDelete }: TaskCardProps) {
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
             {task.description}
           </p>
+        )}
+        {task.due_date && (
+          <div className="mt-1.5 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+              className={`h-3 w-3 ${
+                urgency === "overdue" ? "text-red-500 dark:text-red-400" :
+                urgency === "soon" ? "text-orange-500 dark:text-orange-400" :
+                "text-gray-400 dark:text-gray-500"
+              }`}
+            >
+              <path fillRule="evenodd" d="M4 1.75a.75.75 0 0 1 1.5 0V3h5V1.75a.75.75 0 0 1 1.5 0V3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2V1.75ZM4.5 7a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7Z" clipRule="evenodd" />
+            </svg>
+            <span className={`text-xs font-medium ${
+              urgency === "overdue" ? "text-red-600 dark:text-red-400" :
+              urgency === "soon" ? "text-orange-600 dark:text-orange-400" :
+              "text-gray-500 dark:text-gray-400"
+            }`}>
+              {formatDueDate(task.due_date)}
+            </span>
+          </div>
         )}
       </div>
 

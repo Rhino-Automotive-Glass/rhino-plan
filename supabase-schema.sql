@@ -9,6 +9,7 @@ create table if not exists tasks (
   position   float8 not null default 0,
   origin_sheet_id   text references public.origin_sheets(id),
   origin_sheet_code text,
+  due_date          date,
   created_at timestamptz not null default now()
 );
 
