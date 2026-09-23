@@ -1,11 +1,30 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 import type { Task } from "@/types";
 import KanbanBoard from "./components/KanbanBoard";
 import { ThemeToggle } from "@/components/theme";
+import { signOut } from "./auth-actions";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: level, error: roleError } = await supabase.rpc("current_user_hierarchy_level");
+  if (roleError || typeof level !== "number" || level < 10) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <h1 className="text-2xl font-semibold">Access pending</h1>
+        <p>Your account needs a Rhino role before it can access tasks.</p>
+        <form action={signOut}>
+          <button type="submit" className="btn btn-primary btn-md">Sign out</button>
+        </form>
+      </main>
+    );
+  }
+
   const { data: tasks, error } = await supabase
     .from("tasks")
     .select("*")
@@ -36,7 +55,12 @@ export default async function Home() {
               <p className="text-xs text-gray-500 dark:text-gray-400">Kanban Board</p>
             </div>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <form action={signOut}>
+              <button type="submit" className="text-sm text-gray-600 hover:text-blue-600 dark:text-gray-300">Sign out</button>
+            </form>
+          </div>
         </div>
       </header>
 
