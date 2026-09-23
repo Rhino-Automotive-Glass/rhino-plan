@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const GUEST_ONLY_PATHS = ["/login", "/signup", "/forgot-password"];
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
 
@@ -24,9 +26,13 @@ export async function proxy(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-  const isLogin = request.nextUrl.pathname === "/login";
+  const { pathname } = request.nextUrl;
+  // Signed-in users are sent home from these; everyone else may view them.
+  const isGuestOnly = GUEST_ONLY_PATHS.includes(pathname);
+  // Reachable with or without a session (email links, recovery session).
+  const isOpen = pathname.startsWith("/auth/") || pathname === "/reset-password";
 
-  if ((!user && !isLogin) || (user && isLogin)) {
+  if ((!user && !isGuestOnly && !isOpen) || (user && isGuestOnly)) {
     const url = request.nextUrl.clone();
     url.pathname = user ? "/" : "/login";
     url.search = "";
