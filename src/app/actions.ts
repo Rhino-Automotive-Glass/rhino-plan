@@ -1,9 +1,23 @@
 "use server";
 
-import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 import type { ColumnId, OriginSheet } from "@/types";
 
+async function authorizedClient() {
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return null;
+
+  const { data: level, error: roleError } = await supabase.rpc("current_user_hierarchy_level");
+  if (roleError || typeof level !== "number" || level < 10) return null;
+
+  return supabase;
+}
+
 export async function createTask(formData: FormData) {
+  const supabase = await authorizedClient();
+  if (!supabase) return { error: "Access denied" };
+
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
   const column = (formData.get("column") as ColumnId) ?? "backlog";
@@ -52,6 +66,9 @@ export async function moveTask(
   newColumn: ColumnId,
   newPosition: number
 ) {
+  const supabase = await authorizedClient();
+  if (!supabase) return { error: "Access denied" };
+
   const { error } = await supabase
     .from("tasks")
     .update({ column: newColumn, position: newPosition })
@@ -72,7 +89,10 @@ export async function searchOriginSheets(
     return { data: [], error: null };
   }
 
-  const { data, error } = await supabaseAdmin
+  const supabase = await authorizedClient();
+  if (!supabase) return { data: null, error: "Access denied" };
+
+  const { data, error } = await supabase
     .from("origin_sheets")
     .select("id, rhino_code, descripcion, clave_externa, data")
     .or(`rhino_code.ilike.%${term}%,descripcion.ilike.%${term}%`)
@@ -87,6 +107,9 @@ export async function searchOriginSheets(
 }
 
 export async function deleteTask(taskId: string) {
+  const supabase = await authorizedClient();
+  if (!supabase) return { error: "Access denied" };
+
   const { error } = await supabase.from("tasks").delete().eq("id", taskId);
 
   if (error) {

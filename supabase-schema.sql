@@ -1,3 +1,4 @@
+-- Production is the source of truth. This file mirrors public.tasks as inspected on 2026-09-23.
 -- Rhino-Plan: Kanban board tasks table
 -- Run this in your Supabase SQL Editor (Dashboard → SQL Editor → New Query)
 
@@ -16,10 +17,20 @@ create table if not exists tasks (
 -- Index for fast ordering within each column
 create index if not exists idx_tasks_column_position on tasks ("column", position);
 
--- Allow anonymous read/write (MVP — no auth)
-alter table tasks enable row level security;
+alter table public.tasks enable row level security;
 
-create policy "Allow anonymous read"  on tasks for select using (true);
-create policy "Allow anonymous insert" on tasks for insert with check (true);
-create policy "Allow anonymous update" on tasks for update using (true);
-create policy "Allow anonymous delete" on tasks for delete using (true);
+drop policy if exists "Allow anonymous read" on public.tasks;
+drop policy if exists "Allow anonymous insert" on public.tasks;
+drop policy if exists "Allow anonymous update" on public.tasks;
+drop policy if exists "Allow anonymous delete" on public.tasks;
+drop policy if exists "Authenticated users can access tasks" on public.tasks;
+drop policy if exists "Users with a role can access tasks" on public.tasks;
+
+revoke all on public.tasks from anon;
+
+create policy "Users with a role can access tasks"
+  on public.tasks
+  for all
+  to authenticated
+  using ((select public.current_user_hierarchy_level()) >= 10)
+  with check ((select public.current_user_hierarchy_level()) >= 10);
