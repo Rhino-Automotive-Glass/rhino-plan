@@ -1,13 +1,18 @@
-import LoginForm from "./LoginForm";
+"use client";
+
+import { AuthLayout, LoginForm } from "@rhino-automotive-glass/auth-ui";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  const supabase = createClient();
+
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="card w-full max-w-sm p-8">
-        <h1 className="text-2xl font-semibold mb-2">Rhino Plan</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">Sign in with your Rhino account.</p>
-        <LoginForm />
-      </div>
-    </main>
+    <AuthLayout
+      backgroundImage="/parabrisas-medallones-van-camioneta-autobuses.webp"
+      title="Rhino Plan"
+      subtitle="Sign in with your Rhino account"
+    >
+      <LoginForm supabase={supabase} redirectTo="/" />
+    </AuthLayout>
   );
 }
